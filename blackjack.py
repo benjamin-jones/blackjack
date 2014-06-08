@@ -8,6 +8,8 @@ class Card:
 		return cards[random.randint(0,len(cards)-1)]
 	def __init__(self):
 		self.value = self.RandomCard()
+	def __init__(self, value):
+		self.value = value
 	def getValue(self):
 		return self.value
 
@@ -19,6 +21,8 @@ class Hand():
 			return self.cards[0]
 	def addCard(self):
 		card = Card()
+		self.cards.append(card)
+	def addCard(self, card):
 		self.cards.append(card)
 	def getCards(self):
 		return self.cards
@@ -126,18 +130,27 @@ class GameState:
 		return status
 
 def printGreeting(game):
-	bet = raw_input("Enter bet: ")
-	while(float(bet) < 0.0):
-		print "Not today partner"
+	try:
+		
+		print "[Default: 100] ",
 		bet = raw_input("Enter bet: ")
-	if not game:
-		game = GameState(bet,"")
-	else:
-		game = GameState(bet,game.getPlayer())
-	game.showDealer()
-	game.showPlayer()
+		if bet == "":
+			bet = 100.0
+		while(float(bet) < 0.0):
+			print "Not today partner"
+			bet = raw_input("Enter bet: ")
+		if not game:
+			game = GameState(bet,"")
+		else:
+			game = GameState(bet,game.getPlayer())
+		game.showDealer()
+		game.showPlayer()
 
-	return game
+		return game
+	except ValueError:
+		print "Input Error"
+		exit(0)
+		
 
 def getChoice():
 	print "(h)it, (s)tand, (d)ouble, s(p)lit, s(u)rrender"
@@ -220,7 +233,66 @@ def handleChoice(game, choice):
 		return game
 	# Double
 	elif choice == 2:
-		
+		if player.getBank() < 2*player.getBet():
+			print "Not enough! "
+			choice = getChoice()
+			return handleChoice(game, choice)
+		player.setBet(player.getBet()*2)
+		player.getHand().addCard()
+		dealer.getHand().addCard()
+
+		dealer.showFullHand()
+		game.showPlayer()
+
+		if player.getHand().getTotal() > dealer.getHand().getTotal():
+			if player.getHand().getTotal <= 21:
+				print "WIN!"
+				win = float(player.getBet())*2
+				print "You win " + str(win)
+				player.addBank(win)
+				game.stop()
+			else:
+				print "LOSE!"
+				print "You lose " + str(player.getBet())
+				game.stop()
+		elif player.getHand().getTotal() == dealer.getHand().getTotal():
+			print "PUSH!"
+			win = float(player.getBet())
+			print "You win " + str(win)
+			player.addBank(win)
+			game.stop()
+		else:
+			if dealer.getHand().getTotal() <= 21:
+				print "LOSE!"
+				print "You lose " + str(player.getBet())
+				game.stop()
+			else:
+				print "WIN!"
+				win = float(player.getBet())*2
+				print "You win " + str(win)
+				player.addBank(win)
+				game.stop()
+	# Split
+	elif choice == 3:
+
+		if len(player.getHand().getCards()) != 2:
+			print "Can't do that!"
+			choice = getChoice()
+			return handleChoice(game, choice)
+		cards = player.getHand().getCards()
+
+		if cards[0].getValue() != cards[1].getValue():
+			print "Can't do that!"
+			choice = getChoice()
+			return handleChoice(game, choice)	
+	# Surrender
+	elif choice == 4:
+		print "SURRENDER!"
+		win = float(player.getBet())*0.5
+		print "You win " + str(win)
+		player.addBank(win)
+		game.stop()
+			
 	return game
 
 def begin(game):
@@ -238,11 +310,18 @@ def begin(game):
 
 	return game
 if __name__=="__main__":
-	status = True
-	print "Welcome to Blackjack"
-	print "--------------------"
-	print "Putting 1000.0 in the bank"
-	game = begin("")
-	while game.getState():
-		game = begin(game)
-		continue
+	try:
+		status = True
+		print "Welcome to Blackjack"
+		print "--------------------"
+		print "Putting 1000.0 in the bank"
+		game = begin("")
+		while game.getState():
+			game = begin(game)
+			continue
+	except KeyboardInterrupt:
+		print "Bailing!"
+		exit(0)
+	except EOFError:
+		print "Bailing!"
+		exit(0)
