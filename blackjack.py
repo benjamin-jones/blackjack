@@ -8,8 +8,6 @@ class Card:
 		return cards[random.randint(0,len(cards)-1)]
 	def __init__(self):
 		self.value = self.RandomCard()
-	def __init__(self, value):
-		self.value = value
 	def getValue(self):
 		return self.value
 
@@ -21,8 +19,6 @@ class Hand():
 			return self.cards[0]
 	def addCard(self):
 		card = Card()
-		self.cards.append(card)
-	def addCard(self, card):
 		self.cards.append(card)
 	def getCards(self):
 		return self.cards
